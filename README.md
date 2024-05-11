@@ -280,6 +280,68 @@ Karena tadi dituliskan `fopen` untuk file `db.log` dengan tambah `'a'` atau appe
 
 ![github-small](https://github.com/PuroFuro/image_for_sisop/blob/main/foto_modul3/dblog.png)
 
+
+# Soal 2
+
+Max Verstappen 🏎️ seorang pembalap F1 dan programer memiliki seorang adik bernama Min Verstappen (masih SD) sedang menghadapi tahap paling kelam dalam kehidupan yaitu perkalian matematika, Min meminta bantuan Max untuk membuat kalkulator perkalian sederhana (satu sampai sembilan). Sembari Max nguli dia menyuruh Min untuk belajar perkalian dari web (referensi) agar tidak bergantung pada kalkulator.
+(Wajib menerapkan konsep pipes dan fork seperti yang dijelaskan di modul Sisop. Gunakan 2 pipes dengan diagram seperti di modul 3).
+
+**A. Sesuai request dari adiknya Max ingin nama programnya dudududu.c. Sebelum program parent process dan child process, ada input dari user berupa 2 string. Contoh input: tiga tujuh.**
+
+**B. Pada parent process, program akan mengubah input menjadi angka dan melakukan perkalian dari angka yang telah diubah. Contoh: tiga tujuh menjadi 21**
+
+**C. Pada child process, program akan mengubah hasil angka yang telah diperoleh dari parent process menjadi kalimat. Contoh: `21` menjadi “dua puluh satu”.**
+
+**D. Max ingin membuat program kalkulator dapat melakukan penjumlahan, pengurangan, dan pembagian, maka pada program buatlah argumen untuk menjalankan program :**
+
+Perkalian	: ./kalkulator -kali
+Penjumlahan	: ./kalkulator -tambah
+Pengurangan	: ./kalkulator -kurang
+Pembagian	: ./kalkulator -bagi
+
+**Beberapa hari kemudian karena Max terpaksa keluar dari Australian Grand Prix 2024 membuat Max tidak bersemangat untuk melanjutkan programnya sehingga kalkulator yang dibuatnya cuma menampilkan hasil positif jika bernilai negatif maka program akan print “ERROR” serta cuma menampilkan bilangan bulat jika ada bilangan desimal maka dibulatkan ke bawah.**
+
+Dapat kita lihat pada kode, program akan membaca komentar yang digunakan pada kode. Seperti pada operasi perkalian :
+
+```
+        if (strcmp(opsi, "-kali") == 0) {
+            hasil = num1 * num2;
+            if (hasil < 0) {
+                strcpy(words, "ERROR");
+            } else {
+                hasil = floor(hasil);
+                angkaKeKata(hasil, words);
+            }
+            char timestamp[20];
+            format_time(timestamp);
+```
+
+**E. Setelah diberi semangat, Max pun melanjutkan programnya dia ingin (pada child process) kalimat akan di print dengan contoh format :**
+
+Perkalian	: “hasil perkalian tiga dan tujuh adalah dua puluh satu.”
+Penjumlahan	: “hasil penjumlahan tiga dan tujuh adalah sepuluh.”
+Pengurangan	: “hasil pengurangan tujuh dan tiga adalah empat.”
+Pembagian	: “hasil pembagian tujuh dan tiga adalah dua.”
+
+![github-small](https://github.com/PuroFuro/image_for_sisop/blob/main/foto_modul3/foto_modul3/Screenshot_1.png)
+
+**F. Max ingin hasil dari setiap perhitungan dicatat dalam sebuah log yang diberi nama histori.log. Pada parent process, lakukan pembuatan file log berdasarkan data yang dikirim dari child process.**
+
+Format: [date] [type] [message]
+Type: KALI, TAMBAH, KURANG, BAGI
+Ex:
+[10/03/24 00:29:47] [KALI] tujuh kali enam sama dengan empat puluh dua.
+[10/03/24 00:30:00] [TAMBAH] sembilan tambah sepuluh sama dengan sembilan belas.
+[10/03/24 00:30:12] [KURANG] ERROR pada pengurangan.
+
+![github-small](https://github.com/PuroFuro/image_for_sisop/blob/main/foto_modul3/foto_modul3/Screenshot_2.png)
+
+Changelog :
+
+- Perbaikan pada output di terminal
+- Perbaikan pada output di log
+- Perubahan pada operasi yang membuat program dijalankan dengan 3 strings
+
 ## Soal 3
 
 Shall Leglerg🥶 dan Carloss Signs 😎 adalah seorang pembalap F1 untuk tim Ferrari 🥵. Mobil F1 memiliki banyak pengaturan, seperti penghematan ERS, Fuel, Tire Wear dan lainnya. Pada minggu ini ada race di sirkuit Silverstone. Malangnya, seluruh tim Ferrari diracun oleh Super Max Max pada hari sabtu sehingga seluruh kru tim Ferrari tidak bisa membantu Shall Leglerg🥶 dan Carloss Signs 😎 dalam race. Namun, kru Ferrari telah menyiapkan program yang bisa membantu mereka dalam menyelesaikan race secara optimal. Program yang dibuat bisa mengatur pengaturan - pengaturan dalam mobil F1 yang digunakan dalam balapan. Programnya ber ketentuan sebagai berikut:
