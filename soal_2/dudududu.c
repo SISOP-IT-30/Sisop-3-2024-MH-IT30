@@ -1,48 +1,62 @@
+imnotHZ, [5/11/2024 8:04 PM]
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <math.h>
 
-// Declare num1 and num2 globally
-int num1 = 0;
-int num2 = 0;
+int stringToNumber(char *word) {
+    // Dictionary for converting Indonesian numbers to integers
+    char *number_words[] = {"nol", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan"};
 
-char *number_to_words[] = {"", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan"};
+    for (int i = 0; i < 10; i++) {
+        if (strcmp(word, number_words[i]) == 0) {
+            return i;
+        }
+    }
+    return -1; // If word is not a valid number, return -1
+}
 
-void convert_to_words(int num, char *result) {
+void angkaKeKata(int num, char *result) {
+    char *number_words[] = {"", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan"};
+    
     if (num >= 1 && num <= 9) {
-        strcpy(result, number_to_words[num]);
+        strcpy(result, number_words[num]);
     } else if (num >= 10 && num <= 19) {
         switch(num) {
             case 10: strcpy(result, "sepuluh"); break;
             case 11: strcpy(result, "sebelas"); break;
             default: {
-                strcpy(result, number_to_words[num % 10]);
+                strcpy(result, number_words[num % 10]);
                 strcat(result, " belas");
                 break;
             }
         }
     } else if (num >= 20 && num <= 99) {
-        strcpy(result, number_to_words[num / 10]);
+        strcpy(result, number_words[num / 10]);
         strcat(result, " puluh");
         if (num % 10 != 0) {
             strcat(result, " ");
-            strcat(result, number_to_words[num % 10]);
+            strcat(result, number_words[num % 10]);
         }
     }
 }
 
-int words_to_number(char *word) {
-    int num = 0;
-    for (int i = 1; i <= 9; i++) {
-        if (strcmp(word, number_to_words[i]) == 0) {
-            num = i;
-            break;
-        }
+void outputLog(int logNumber, char *operation, char *expression, char *timestamp, char *result) {
+    FILE *logFile;
+    logFile = fopen("histori.log", "a");
+    if (logFile == NULL) {
+        printf("Error: Cannot open log file.\n");
+        exit(EXIT_FAILURE);
     }
-    return num;
+    if (strcmp(result, "ERROR") == 0) {
+        fprintf(logFile, "[%s] [%s] ERROR pada %s\n", timestamp, operation, expression);
+    } else {
+        fprintf(logFile, "[%s] [%s] %s %s\n", timestamp, operation, expression, result);
+    }
+    fclose(logFile);
 }
 
 void format_time(char *buffer) {
@@ -50,110 +64,134 @@ void format_time(char *buffer) {
     struct tm *info;
     time(&now);
     info = localtime(&now);
-    strftime(buffer, 20, "%d/%m/%y %H:%M:%S", info);
+    strftime(buffer, 20, "%d/%m/%Y %H:%M:%S", info);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        printf("Usage: %s <operation>\n", argv[0]);
+    if (argc != 4) {
+        printf("Usage: %s <operation> <operand1> <operand2>\n", argv[0]);
         return 1;
     }
 
+    char *opsi = argv[1];
+    char *input1 = argv[2];
+    char *input2 = argv[3];
     int pipefd[2];
+    int logNumber = 1;
+    int num1, num2;
+    int hasil;
+    char words[100];
+
     if (pipe(pipefd) == -1) {
-        perror("pipe");
-        return 1;
+        perror("Pipe failed");
+        exit(EXIT_FAILURE);
     }
 
     pid_t pid = fork();
 
-    if (pid < 0) {
-        perror("fork");
-        return 1;
+    if (pid == -1) {
+        perror("Fork failed");
+        exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) { // Child process
-        close(pipefd[1]); // Close write end of the pipe
-        int result;
-        read(pipefd[0], &result, sizeof(result)); // Read result from parent
+    if (pid == 0) {
+        close(pipefd[0]);
 
-        char words[100];
-        convert_to_words(result, words);
+        num1 = stringToNumber(input1);
+        num2 = stringToNumber(input2);
 
-        // Output
-        printf("hasil %s ", argv[1]);
-        if (strcmp(argv[1], "-kali") == 0) {
-            printf("%s dan %s adalah %s.\n", number_to_words[num1], number_to_words[num2], words);
-        } else if (strcmp(argv[1], "-tambah") == 0) {
-            printf("%s dan %s adalah %s.\n", number_to_words[num1], number_to_words[num2], words);
-        } else if (strcmp(argv[1], "-kurang") == 0) {
-            printf("%s dan %s adalah %s.\n", number_to_words[num1], number_to_words[num2], words);
-        } else if (strcmp(argv[1], "-bagi") == 0) {
-            printf("%s dan %s adalah %s.\n", number_to_words[num1], number_to_words[num2], words);
+        if (num1 == -1 || num2 == -1) {
+            printf("Invalid input\n");
+            close(pipefd[1]);
+            exit(EXIT_FAILURE);
         }
 
-        // Logging
-        FILE *log_file = fopen("histori.log", "a");
-        if (log_file != NULL) {
+        if (strcmp(opsi, "-kali") == 0) {
+            hasil = num1 * num2;
+            if (hasil < 0) {
+                strcpy(words, "ERROR");
+            } else {
+                hasil = floor(hasil);
+                angkaKeKata(hasil, words);
+            }
             char timestamp[20];
             format_time(timestamp);
-            fprintf(log_file, "[%s] ", timestamp);
-            if (strcmp(argv[1], "-kali") == 0) {
-                fprintf(log_file, "[perkalian] hasil %s %s dan %s adalah %s.\n", argv[1], number_to_words[num1], number_to_words[num2], words);
-            } else if (strcmp(argv[1], "-tambah") == 0) {
-                fprintf(log_file, "[penjumlahan] hasil %s %s dan %s adalah %s.\n", argv[1], number_to_words[num1], number_to_words[num2], words);
-            } else if (strcmp(argv[1], "-kurang") == 0) {
-                fprintf(log_file, "[pengurangan] hasil %s %s dan %s adalah %s.\n", argv[1], number_to_words[num1], number_to_words[num2], words);
-            } else if (strcmp(argv[1], "-bagi") == 0) {
-                fprintf(log_file, "[pembagian] hasil %s %s dan %s adalah %s.\n", argv[1], number_to_words[num1], number_to_words[num2], words);
+
+            outputLog(logNumber, "KALI", strcat(strcat(strcat(input1, " kali "), input2), " sama dengan "), timestamp, words);
+        } else if (strcmp(opsi, "-tambah") == 0) {
+            hasil = num1 + num2;
+            if (hasil < 0) {
+                strcpy(words, "ERROR");
+            } else {
+                hasil = floor(hasil);
+                angkaKeKata(hasil, words);
             }
-            fclose(log_file);
-        } else {
-            printf("Failed to open log file.\n");
-        }
+            char timestamp[20];
+            format_time(timestamp);
 
-        close(pipefd[0]); // Close read end of the pipe
-    } else { // Parent process
-        close(pipefd[0]); // Close read end of the pipe
-char input[20];
-        printf("Masukkan dua angka (dalam kata): ");
-        fgets(input, sizeof(input), stdin);
-        
-        // Remove trailing newline
-        input[strcspn(input, "\n")] = 0;
-
-        char *token = strtok(input, " ");
-        num1 = words_to_number(token);
-
-        token = strtok(NULL, " ");
-        num2 = words_to_number(token);
-
-        int result;
-        if (strcmp(argv[1], "-kali") == 0) {
-            result = num1 * num2;
-        } else if (strcmp(argv[1], "-tambah") == 0) {
-            result = num1 + num2;
-        } else if (strcmp(argv[1], "-kurang") == 0) {
-            result = num1 - num2;
-            if (result < 0) {
-                printf("ERROR\n");
-                close(pipefd[1]);
-                return 0;
+            outputLog(logNumber, "TAMBAH", strcat(strcat(strcat(input1, " tambah "), input2), " sama dengan "), timestamp, words);
+        } else if (strcmp(opsi, "-kurang") == 0) {
+            hasil = num1 - num2;
+            if (hasil < 0) {
+                strcpy(words, "ERROR");
+            } else {
+                hasil = floor(hasil);
+                angkaKeKata(hasil, words);
             }
-        } else if (strcmp(argv[1], "-bagi") == 0) {
+
+imnotHZ, [5/11/2024 8:04 PM]
+char timestamp[20];
+            format_time(timestamp);
+
+            outputLog(logNumber, "KURANG", strcat(strcat(strcat(input1, " kurang "), input2), " sama dengan "), timestamp, words);
+
+        } else if (strcmp(opsi, "-bagi") == 0) {
             if (num2 == 0) {
-                printf("ERROR: Division by zero\n");
+                printf("Division by zero is not allowed.\n");
                 close(pipefd[1]);
-                return 0;
+                exit(EXIT_FAILURE);
             }
-            result = num1 / num2;
+            hasil = num1 / num2;
+            if (hasil < 0) {
+                strcpy(words, "ERROR");
+            } else {
+                hasil = floor(hasil);
+                angkaKeKata(hasil, words);
+            }
+            char timestamp[20];
+            format_time(timestamp);
+
+            outputLog(logNumber, "BAGI", strcat(strcat(strcat(input1, " bagi "), input2), " sama dengan "), timestamp, words);
+        } else {
+            printf("Invalid operation\n");
+            close(pipefd[1]);
+            exit(EXIT_FAILURE);
         }
 
-        // Send result to child process
-        write(pipefd[1], &result, sizeof(result));
+        write(pipefd[1], words, strlen(words) + 1);
+        close(pipefd[1]);
+        exit(EXIT_SUCCESS);
+    } else {
+        close(pipefd[1]);
 
-        close(pipefd[1]); // Close write end of the pipe
-        wait(NULL); // Wait for child process to finish
+        char hasilKalimat[100];
+        read(pipefd[0], hasilKalimat, sizeof(hasilKalimat));
+
+        if (strcmp(opsi, "-kali") == 0) {
+            printf("Hasil perkalian %s dan %s adalah %s.\n", input1, input2, hasilKalimat);
+        } else if (strcmp(opsi, "-tambah") == 0) {
+            printf("Hasil penjumlahan %s dan %s adalah %s.\n", input1, input2, hasilKalimat);
+        } else if (strcmp(opsi, "-kurang") == 0) {
+            printf("Hasil pengurangan %s dan %s adalah %s.\n", input1, input2, hasilKalimat);
+        } else if (strcmp(opsi, "-bagi") == 0) {
+            printf("Hasil pembagian %s dan %s adalah %s.\n", input1, input2, hasilKalimat);
+        } else {
+            printf("Invalid operation\n");
+            exit(EXIT_FAILURE);
+        }
+
+        close(pipefd[0]);
+        exit(EXIT_SUCCESS);
     }
 
     return 0;
