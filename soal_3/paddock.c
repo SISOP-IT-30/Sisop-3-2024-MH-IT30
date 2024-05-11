@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <syslog.h>
 //Aksi dari action anjay
-#include "action.c"
+#include "actions.c"
 
 void doraemon(){
     pid_t pid;

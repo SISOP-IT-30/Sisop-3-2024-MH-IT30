@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
       
-    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
+    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0) {
         printf("\nInvalid address/ Address not supported \n");
         return -1;
     }
@@ -45,7 +45,6 @@ int main(int argc, char *argv[]) {
         printf("Puro says choose:\n");
         for(int i = 0; i < 4; i++){
             printf("%s\n", untukprint[i]);
-            sleep(1);
         }
         memset(baper, 0, sizeof(baper));
         fgets(baper, sizeof(baper), stdin);

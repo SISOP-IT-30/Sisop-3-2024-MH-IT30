@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define NEWDATADIR "/home/purofuro/Fico/M3S1/newdata/"
-#define DATABASEDIR "/home/purofuro/Fico/M3S1/microservices/"
+#define DATABASEDIR "/home/purofuro/Fico/M3S1/microservices/database/"
 
 int main() {
     key_t key = 1234;
